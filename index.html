@@ -1,0 +1,147 @@
+<html>
+
+<head>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="idCanvas" height="900px" width="1200px">
+  </canvas>
+</body>
+
+<script>
+  const ALPHABET = [
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  ];
+
+  let text = [
+    { letter: 'A', width: 100, height: 0 },
+    { letter: 'M', width: 200, height: 0 },
+    { letter: 'A', width: 300, height: 0 },
+    { letter: 'Z', width: 400, height: 0 },
+    { letter: 'I', width: 500, height: 0 },
+    { letter: 'N', width: 600, height: 0 },
+    { letter: 'G', width: 700, height: 0 },
+  ];
+
+  const FONT_SIZE = 30;
+
+  const score = {
+    errors: 0,
+    correct: 0,
+    missed: 0,
+  }
+
+  function render(canvas, ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    text.forEach(({ letter, width, height}) => {
+      ctx.fillText(letter, width, height);
+    });
+
+    ctx.fillText(`Correct: ${score.correct}\n`, 0, 100);
+    ctx.fillText(`Errors: ${score.errors}`, 0, 200);
+    ctx.fillText(`Missed: ${score.missed}`, 0, 300);
+  }
+
+  function shouldAddLetter() {
+    return Math.random() < 0.1;
+  }
+
+  function getRandomLetter() {
+    const index = Math.floor(Math.random() * ALPHABET.length);
+
+    return ALPHABET[index];
+  }
+
+  function getRandomWidth(canvas) {
+    return Math.floor(Math.random() * canvas.width);
+  }
+
+  function translateLetters(canvas) {
+    const maxHeight = canvas.height - FONT_SIZE;
+    const oldLength = text.length;
+    
+    text = text.map(x => {
+      return {
+        ...x,
+        height: x.height + 10,
+      }
+    }).filter(({ height}) => height < maxHeight);
+
+    if (oldLength > text.length) {
+      score.missed = score.missed + oldLength - text.length;
+    }
+  }
+
+  window.onload = () => {
+    const canvas = document.getElementById("idCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.font = `${FONT_SIZE}px Verdana`;
+
+    document.onkeyup = ({ key }) => {
+      const oldLength = text.length;
+      text = text.filter(({ letter }) => letter.toLowerCase() !== key);
+
+      if (oldLength > text.length) {
+        score.correct = score.correct + 1;
+      } else {
+        score.errors = score.errors + 1;
+      }
+
+      render(canvas, ctx);
+    }
+
+    setInterval(() => {
+      translateLetters(canvas);
+
+      if (shouldAddLetter()) {
+        text.push({
+          letter: getRandomLetter(),
+          width: getRandomWidth(canvas),
+          height: 0,
+        });
+      }
+
+      render(canvas, ctx);
+    }, 100);
+
+    render(canvas, ctx);
+  }
+
+</script>
+
+</html>
