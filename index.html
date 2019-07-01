@@ -58,6 +58,9 @@
     { letter: 'G', width: 700, height: 0 },
   ];
 
+  let difficulty = 1;
+  let lettersGenerated = 0;
+
   const FONT_SIZE = 30;
 
   const score = {
@@ -66,19 +69,30 @@
     missed: 0,
   }
 
+  let intervalHandler;
+
   function render(canvas, ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    text.forEach(({ letter, width, height}) => {
+    text.forEach(({ letter, width, height }) => {
       ctx.fillText(letter, width, height);
     });
 
     ctx.fillText(`Correct: ${score.correct}\n`, 0, 100);
     ctx.fillText(`Errors: ${score.errors}`, 0, 200);
     ctx.fillText(`Missed: ${score.missed}`, 0, 300);
+    ctx.fillText(`Level: ${difficulty}`, 0, 400);
+
+    if (score.errors >= 10 || score.missed >= 10) {
+      clearInterval(intervalHandler);
+      intervalHandler = null;
+      ctx.fillText('GAME OVER', 400, 400);
+    }
   }
 
   function shouldAddLetter() {
-    return Math.random() < 0.1;
+    const probability = difficulty / 10;
+
+    return Math.random() < probability;
   }
 
   function getRandomLetter() {
@@ -94,13 +108,13 @@
   function translateLetters(canvas) {
     const maxHeight = canvas.height - FONT_SIZE;
     const oldLength = text.length;
-    
+
     text = text.map(x => {
       return {
         ...x,
         height: x.height + 10,
       }
-    }).filter(({ height}) => height < maxHeight);
+    }).filter(({ height }) => height < maxHeight);
 
     if (oldLength > text.length) {
       score.missed = score.missed + oldLength - text.length;
@@ -113,22 +127,33 @@
     ctx.font = `${FONT_SIZE}px Verdana`;
 
     document.onkeyup = ({ key }) => {
-      const oldLength = text.length;
-      text = text.filter(({ letter }) => letter.toLowerCase() !== key);
+      if (!intervalHandler) {
+        return;
+      }
 
-      if (oldLength > text.length) {
-        score.correct = score.correct + 1;
+      const indexToRemove = text.findIndex(({ letter }) => letter.toLowerCase() === key);
+
+      if (indexToRemove >= 0) {
+        text.splice(indexToRemove, 1);
+        score.correct += 1;
       } else {
-        score.errors = score.errors + 1;
+        score.errors += 1;
       }
 
       render(canvas, ctx);
     }
 
-    setInterval(() => {
+    intervalHandler = setInterval(() => {
       translateLetters(canvas);
 
       if (shouldAddLetter()) {
+        if (lettersGenerated === (10 + difficulty * 5)) {
+          lettersGenerated = 0;
+          difficulty += 1;
+        } else {
+          lettersGenerated += 1;
+        }
+
         text.push({
           letter: getRandomLetter(),
           width: getRandomWidth(canvas),
