@@ -102,7 +102,7 @@
   }
 
   function getRandomWidth(canvas) {
-    return Math.floor(Math.random() * canvas.width);
+    return Math.floor(Math.random() * (canvas.width - FONT_SIZE));
   }
 
   function translateLetters(canvas) {
